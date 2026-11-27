@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: hardware
+          POSTGRES_USER: hardware
+          POSTGRES_PASSWORD: ci-only-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U hardware -d hardware"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      POSTGRES_DB: hardware
+      POSTGRES_USER: hardware
+      POSTGRES_PASSWORD: ci-only-password
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: "5432"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - run: pip install -r requirements-dev.txt
+
+      - name: Generate a throwaway secret key
+        run: echo "SECRET_KEY=$(python -c 'import secrets; print(secrets.token_urlsafe(60))')" >> "$GITHUB_ENV"
+
+      - name: Lint
+        run: |
+          ruff check .
+          ruff format --check .
+
+      - name: Build CSS
+        run: sh bin/tailwind build
+
+      - name: Migrations are up to date
+        run: python manage.py makemigrations --check --dry-run
+        env:
+          DEBUG: "1"
+
+      - name: Tests
+        run: python manage.py test
+        env:
+          DEBUG: "1"
+
+      - name: Deployment checks (production settings)
+        run: |
+          python manage.py check --deploy --fail-level WARNING
+          python manage.py collectstatic --noinput
+        env:
+          DEBUG: "0"
+          ALLOWED_HOSTS: ci.example.com
