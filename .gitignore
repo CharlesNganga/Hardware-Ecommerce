@@ -22,7 +22,7 @@ db.sqlite3
 
 # Built CSS and the Tailwind CLI binary (built/downloaded, not committed)
 /static/css/app.css
-/bin/tailwindcss
+/bin/tailwindcss-*
 
 # Editors and OS
 .idea/
