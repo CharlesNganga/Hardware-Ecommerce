@@ -1,0 +1,22 @@
+/* The only place raw colour and font values live. Check contrast before adding a colour. */
+@theme {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, "Noto Sans", sans-serif;
+
+  /* Brand (v1 blue). Contrast on white: 600 is 8.7, 700 is 11.2. */
+  --color-brand-50: #eef0fd;
+  --color-brand-100: #dfe3fc;
+  --color-brand-600: #1228e1;
+  --color-brand-700: #0f20b3;
+
+  /* Status, each on white (contrast 5.0, 5.0, 6.5) with a tint for backgrounds. */
+  --color-success-50: #f0fdf4;
+  --color-success-600: #15803d;
+  --color-warning-50: #fffbeb;
+  --color-warning-600: #b45309;
+  --color-danger-50: #fef2f2;
+  --color-danger-600: #b91c1c;
+
+  /* WhatsApp green: always use dark text (gray-900) on it, never white. */
+  --color-whatsapp: #25d366;
+}

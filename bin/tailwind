@@ -1,0 +1,47 @@
+#!/bin/sh
+# Runs the Tailwind standalone CLI (no Node needed). Downloads a pinned version
+# on first use and checks it against a known SHA-256.
+#
+#   bin/tailwind build     one-off minified build -> static/css/app.css
+#   bin/tailwind watch     rebuild on every change (development)
+set -eu
+
+VERSION="v4.3.5"
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+case "$(uname -s)-$(uname -m)" in
+  Linux-x86_64)                 NAME="tailwindcss-linux-x64";   SHA="e47695cee3f0d90623a91f3939b08bdee610eb5ad99340adff9d4145b284d6cc" ;;
+  Linux-aarch64|Linux-arm64)    NAME="tailwindcss-linux-arm64"; SHA="ffcd0d21dbd7c605dc12743ff0c0b47debc963c86b399674084c1c8f2c96ecad" ;;
+  Darwin-arm64)                 NAME="tailwindcss-macos-arm64"; SHA="f3f4f5d1727e2b693b8f1c9a1492b5dd87008c86ea286bee1589cb458e6235fc" ;;
+  Darwin-x86_64)                NAME="tailwindcss-macos-x64";   SHA="a63702686a3ed048b3135d84a73be49ea9d47f880c9b20e54b3ef60934ad8cdf" ;;
+  *) echo "Unsupported platform $(uname -s)-$(uname -m). On Windows use Docker Compose." >&2; exit 1 ;;
+esac
+
+BIN="$ROOT/bin/$NAME-$VERSION"
+
+if [ ! -x "$BIN" ]; then
+  echo "Downloading Tailwind CLI $VERSION ($NAME)..." >&2
+  curl -fsSL -o "$BIN.part" "https://github.com/tailwindlabs/tailwindcss/releases/download/$VERSION/$NAME"
+  if command -v sha256sum >/dev/null 2>&1; then
+    ACTUAL="$(sha256sum "$BIN.part" | cut -d' ' -f1)"
+  else
+    ACTUAL="$(shasum -a 256 "$BIN.part" | cut -d' ' -f1)"
+  fi
+  if [ "$ACTUAL" != "$SHA" ]; then
+    rm -f "$BIN.part"
+    echo "Checksum mismatch for $NAME $VERSION. Refusing to run it." >&2
+    exit 1
+  fi
+  chmod +x "$BIN.part"
+  mv "$BIN.part" "$BIN"
+fi
+
+cd "$ROOT"
+IN="static_src/css/app.css"
+OUT="static/css/app.css"
+
+case "${1:-}" in
+  build) exec "$BIN" -i "$IN" -o "$OUT" --minify ;;
+  watch) exec "$BIN" -i "$IN" -o "$OUT" --watch=always ;;
+  *) echo "Usage: bin/tailwind build|watch" >&2; exit 1 ;;
+esac

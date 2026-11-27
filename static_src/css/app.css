@@ -1,0 +1,9 @@
+@import "tailwindcss" source(none);
+
+/* Template folders Tailwind scans for class names. Add a line per new app. */
+@source "../../templates";
+@source "../../pages/templates";
+
+@import "./tokens.css";
+@import "./base.css";
+@import "./components.css";
