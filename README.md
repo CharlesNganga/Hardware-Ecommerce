@@ -30,6 +30,12 @@ docker compose exec web ruff check . && docker compose exec web ruff format --ch
 docker compose exec web python manage.py makemigrations   # after changing models
 ```
 
+Load invented sample products for development (refuses to run when `DEBUG` is off; safe to run twice):
+
+```sh
+docker compose exec web python manage.py load_sample_catalog
+```
+
 Without Docker (Linux or macOS, Python 3.13, a running Postgres): `pip install -r requirements-dev.txt`, export the variables from `.env.example`, run `sh bin/tailwind build`, then `python manage.py migrate && python manage.py runserver`.
 
 ## Layout
@@ -37,6 +43,7 @@ Without Docker (Linux or macOS, Python 3.13, a running Postgres): `pip install -
 | Path | What |
 |---|---|
 | `config/` | Django settings (all from environment variables), URLs |
+| `catalog/` | Category, Brand and Product models and their admin |
 | `pages/` | Home page and, later, site settings and contact pages |
 | `templates/` | `base.html` and shared `components/` |
 | `static_src/css/` | Tailwind source: `tokens.css` (colours, fonts), `base.css`, `components.css` |
